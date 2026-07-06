@@ -11,7 +11,7 @@ func main() {
 	http.HandleFunc("/", handleSimulationResponse)
 
 	port := "8080"
-	fmt.Printf("General simulation api simulator running on http://localhost:%s", port)
+	fmt.Printf("General api simulator running on http://localhost:%s", port)
 
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
