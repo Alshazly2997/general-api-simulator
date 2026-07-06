@@ -2,23 +2,40 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 func main() {
-	log.SetFlags(0)
+	http.HandleFunc("/", handleSimulationResponse)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/bbs-simulate/querybbs", reqOtp)
-	mux.HandleFunc("/bbs-simulate/topup", topup)
-	// mux.HandleFunc("/bbs-simulate/checkblacklist", checkBlackList)
+	port := "8080"
+	fmt.Printf("General simulation web service running on http://localhost:%s", port)
 
-	port := GetConfigValue("port", "8080")
-	fmt.Println("BBS Simulate web service, running on")
-	fmt.Println("http://localhost:" + port)
-	err := http.ListenAndServe(":"+port, mux)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
-		fmt.Println("Error starting server:", err)
+		fmt.Println("Server failed to start: ", err)
 	}
+}
+
+func handleSimulationResponse(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	endpoint := filepath.Base(r.URL.Path)
+	filename := fmt.Sprintf("%s.json", endpoint)
+
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+	fmt.Printf("Served %s for endpoint %s\n", filename, r.URL.Path)
 }
